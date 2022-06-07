@@ -325,7 +325,7 @@ class Game(): #メイン処理のクラス
                     if event.key == pg.K_ESCAPE:
                         running = False
                     if self.game_start:
-                        if event.key == K_9:
+                        if event.key == K_RETURN:
                             self.game_start = False
 
                     #リスタート処理  gameover時　初期値に戻す

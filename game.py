@@ -17,6 +17,9 @@ GRAY = (200, 200, 200)
 # フォントの設定
 font_name = pg.font.match_font("hg正楷書体pro")
 
+PIC1 = 'pic/egg.png'
+PIC2 = 'pic/bomb-1.png'
+
 def draw_text(screen, text, size, x, y, color): # テキスト描画用の関数
     font = pg.font.Font(font_name, size)
     text_surface = font.render(text, True, color)
@@ -24,6 +27,12 @@ def draw_text(screen, text, size, x, y, color): # テキスト描画用の関数
     text_rect.midtop = (x, y)
     screen.blit(text_surface, text_rect)
 
+def sound():#C0B21128 西口響
+    #音楽を呼び出す関数
+    pg.mixer.init(frequency = 44100)    # 初期設定
+    pg.mixer.music.load("sound/PerituneMaterial_Dream_and_Reality_inst_loop.mp3")     # 音楽ファイルの読み込み
+    pg.mixer.music.play(-1)   # 音楽の再生回数
+    return 0
 
 class Background:# バックグラウンドクラス
     def __init__(self):
@@ -158,13 +167,14 @@ class Plane(pg.sprite.Sprite):
 
 
 class Bullet(pg.sprite.Sprite): # 弾丸クラス
-    def __init__(self, x, y):
+    def __init__(self,x,y,pic = PIC1):
+        # pic変数を夏川が追加
         pg.sprite.Sprite.__init__(self)
 
         # イメージを空のリストに格納
         self.bullet_images = []
-        img = pg.image.load('pic/egg.png').convert_alpha()
-        img = pg.transform.scale(img, (30, 30))
+        img = pg.image.load(pic).convert_alpha()
+        img = pg.transform.scale(img,(30, 30))
         self.bullet_images.append(img)
         
          # 描画する画像を指定するための設定
@@ -173,10 +183,13 @@ class Bullet(pg.sprite.Sprite): # 弾丸クラス
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]        
            
-    def update(self): # 毎フレームの処理用メソッド
-        self.rect.x += 40
+    def update(self, dx = 40): # 毎フレームの処理用メソッド
+        # dxを夏川が追記
+        self.rect.x += dx
         # 位置が右端までいった場合の処理（killで自分自身をスプライトグループから削除する）
         if self.rect.x >= WIDTH:
+            self.kill()
+        if self.rect.x <= 0:
             self.kill()
             
 
@@ -261,6 +274,11 @@ class Game(): # メイン処理のクラス
         self.game_clear = False # 髙井智暉
         self.game_over = False
         self.game_start = True
+        
+        # 夏川の追記（下3行）
+        self.enemy_bullet_group = pg.sprite.Group() 
+        self.enemy_shoot = 25
+        pg.time.set_timer(self.enemy_shoot, 1500)
 
     def game_start_screen(self): # スタート画面の描画用メソッド
         draw_text(self.screen, "戦えぃ！こうかとん", 100, WIDTH / 2, HEIGHT - 650, RED)
@@ -287,14 +305,16 @@ class Game(): # メイン処理のクラス
     def main(self): # メインループ
         running = True
         t = 0
+        sound()#音楽呼び出し
+        #C0B21128 西口響
         while running:
             # 敵キャラのインスタンス化
             t += 1
             if t % 100 == 0:
-                if self.game_clear is False: # 髙井智暉
-                    for i in range(10):
-                        self.mob = Mob(WIDTH, random.randint(100, 800))
-                        self.mob_group.add(self.mob)
+                if self.game_clear == False: # 髙井智暉
+                      self.mob = Mob(WIDTH,random.randint(100,800))
+                      self.mob_group.add(self.mob)
+
             
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -305,7 +325,7 @@ class Game(): # メイン処理のクラス
                     if event.key == pg.K_ESCAPE:
                         running = False
                     if self.game_start:
-                        if event.key == K_9:
+                        if event.key == K_RETURN:
                             self.game_start = False
 
                     # リスタート処理  gameover時　初期値に戻す
@@ -336,6 +356,11 @@ class Game(): # メイン処理のクラス
                             if self.plane.DEAD is False:             
                                 self.plane.IDLE, self.plane.SHOT = True, False
                                 self.bullet_READY = True
+
+                    # 夏川の追記（下3行）
+                    if event.type == self.enemy_shoot:
+                        for i in self.mob_group:
+                            self.enemy_bullet_group.add(Bullet(i.rect.center[0] + 20, i.rect.center[1] + 20, PIC2)) 
                     
                    
             # バックグラウンド表示
@@ -352,15 +377,27 @@ class Game(): # メイン処理のクラス
                 # プレイヤー、弾丸表示
                 self.plane_group.draw(self.screen)
                 self.bullet_group.draw(self.screen)
+                self.enemy_bullet_group.draw(self.screen) # 夏川の追記
 
                 # 各クラスアップデートメソッド実行
                 self.plane_group.update()
                 self.bullet_group.update()            
-                self.mob_group.update()                      
+                self.mob_group.update()          
+                self.enemy_bullet_group.update(-40)            
                                                 
                 # プレイヤーとモブの接触時処理
-                if self.plane.DEAD is False and self.plane.IMMORTAL is False:
-                    mob1_collision =  pg.sprite.groupcollide(self.plane_group, self.mob_group, False, True)
+                if self.plane.DEAD == False and self.plane.IMMORTAL == False:
+                    mob1_collision =  pg.sprite.groupcollide(self.plane_group,self.mob_group,False,True)
+                    
+                    # 夏川の追記
+                    for i in self.enemy_bullet_group: # 敵の弾の中から
+                        if i.rect.colliderect(self.plane.rect): # 弾がこうかとんに当たっていたら
+                            i.kill() # その弾を消す
+                            self.plane.DEAD = True
+                            self.plane.IDLE, self.plane.SHOT, self.bullet_READY = False, False, False
+                            self.plane.lives -= 1
+                    # 追記ここまで
+
                     for collision in mob1_collision:                
                         self.plane.DEAD = True
                         self.plane.IDLE, self.plane.SHOT, self.bullet_READY = False, False, False
@@ -385,7 +422,7 @@ class Game(): # メイン処理のクラス
                 if mob1hits:
                     self.score += 100  
                     # 髙井智暉
-                    if self.score >= 100:
+                    if self.score >= 500:
                         self.game_clear = True            
 
                 # スコア表示              

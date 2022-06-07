@@ -149,4 +149,4 @@
   - sound関数
     - 音が出るようになった
 - 参考資料：
-- https://pythonmemo.com/pygame/pygame002  
+- https://pythonmemo.com/pygame/pygame002

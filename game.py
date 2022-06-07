@@ -17,6 +17,9 @@ GRAY = (200,200,200)
 #フォントの設定
 font_name = pg.font.match_font("hg正楷書体pro")
 
+PIC1 = 'pic/egg.png'
+PIC2 = 'pic/bomb-1.png'
+
 def draw_text(screen,text,size,x,y,color): #テキスト描画用の関数
     font = pg.font.Font(font_name, size)
     text_surface = font.render(text, True, color)
@@ -122,7 +125,7 @@ class Plane(pg.sprite.Sprite):
         self.image = imglist[self.index]
     
     def create_bullet(self): #弾丸生成クラス呼び出しメソッド
-        return Bullet(self.rect.center[0] + 20,self.rect.center[1] + 20)
+        return Bullet(self.rect.center[0] + 20,self.rect.center[1] + 20, PIC1)
 
     def update(self):
         #描画する画像を現在の状態から指定
@@ -164,12 +167,13 @@ class Plane(pg.sprite.Sprite):
 
 
 class Bullet(pg.sprite.Sprite): #弾丸クラス
-    def __init__(self,x,y):
+    def __init__(self,x,y,pic = PIC1):
+        # pic変数を夏川が追加
         pg.sprite.Sprite.__init__(self)
 
         #イメージを空のリストに格納
         self.bullet_images = []
-        img = pg.image.load('pic/egg.png').convert_alpha()
+        img = pg.image.load(pic).convert_alpha()
         img = pg.transform.scale(img,(30,30))
         self.bullet_images.append(img)
         
@@ -179,10 +183,13 @@ class Bullet(pg.sprite.Sprite): #弾丸クラス
         self.rect = self.image.get_rect()
         self.rect.center = [x,y]        
            
-    def update(self): #毎フレームの処理用メソッド
-        self.rect.x += 40
+    def update(self, dx = 40): #毎フレームの処理用メソッド
+        # dxを夏川が追記
+        self.rect.x += dx
         #位置が右端までいった場合の処理（killで自分自身をスプライトグループから削除する）
         if self.rect.x >= WIDTH:
+            self.kill()
+        if self.rect.x <= 0:
             self.kill()
             
 
@@ -267,6 +274,11 @@ class Game(): #メイン処理のクラス
         self.game_clear = False #髙井智暉
         self.game_over = False
         self.game_start = True
+        
+        # 夏川の追記（下3行）
+        self.enemy_bullet_group = pg.sprite.Group() 
+        self.enemy_shoot = 25
+        pg.time.set_timer(self.enemy_shoot, 1500)
 
     def game_start_screen(self): #スタート画面の描画用メソッド
         draw_text(self.screen,"戦えぃ！こうかとん", 100, WIDTH / 2, HEIGHT - 650, RED)
@@ -300,9 +312,9 @@ class Game(): #メイン処理のクラス
             t += 1
             if t % 100 == 0:
                 if self.game_clear == False: #髙井智暉
-                    for i in range(10):
-                        self.mob = Mob(WIDTH,random.randint(100,800))
-                        self.mob_group.add(self.mob)
+                      self.mob = Mob(WIDTH,random.randint(100,800))
+                      self.mob_group.add(self.mob)
+
             
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -344,6 +356,11 @@ class Game(): #メイン処理のクラス
                             if self.plane.DEAD == False:             
                                 self.plane.IDLE,self.plane.SHOT = True,False
                                 self.bullet_READY = True
+
+                    # 夏川の追記（下3行）
+                    if event.type == self.enemy_shoot:
+                        for i in self.mob_group:
+                            self.enemy_bullet_group.add(Bullet(i.rect.center[0] + 20, i.rect.center[1] + 20, PIC2)) 
                     
                    
             #バックグラウンド表示
@@ -361,14 +378,27 @@ class Game(): #メイン処理のクラス
                 self.plane_group.draw(self.screen)
                 self.bullet_group.draw(self.screen)
 
+                self.enemy_bullet_group.draw(self.screen) # 夏川の追記
+
                 #各クラスアップデートメソッド実行
                 self.plane_group.update()
                 self.bullet_group.update()            
-                self.mob_group.update()                      
+                self.mob_group.update()          
+                self.enemy_bullet_group.update(-40)            
                                                 
                 #プレイヤーとモブの接触時処理
                 if self.plane.DEAD == False and self.plane.IMMORTAL == False:
                     mob1_collision =  pg.sprite.groupcollide(self.plane_group,self.mob_group,False,True)
+                    
+                    # 夏川の追記
+                    for i in self.enemy_bullet_group: # 敵の弾の中から
+                        if i.rect.colliderect(self.plane.rect): # 弾がこうかとんに当たっていたら
+                            i.kill() # その弾を消す
+                            self.plane.DEAD = True
+                            self.plane.IDLE, self.plane.SHOT, self.bullet_READY = False, False, False
+                            self.plane.lives -= 1
+                    # 追記ここまで
+
                     for collision in mob1_collision:                
                         self.plane.DEAD = True
                         self.plane.IDLE, self.plane.SHOT, self.bullet_READY = False, False, False
@@ -420,6 +450,8 @@ class Game(): #メイン処理のクラス
                     if self.plane.immortal_timer <= 0:
                         self.plane.IMMORTAL = False
                         self.plane.immortal_timer = 60
+
+                
 
             #FPS設定
             self.clock.tick(self.fps)

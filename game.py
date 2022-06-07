@@ -24,6 +24,12 @@ def draw_text(screen,text,size,x,y,color): #テキスト描画用の関数
     text_rect.midtop = (x, y)
     screen.blit(text_surface,text_rect)
 
+def sound():#C0B21128 西口響
+    #音楽を呼び出す関数
+    pg.mixer.init(frequency = 44100)    # 初期設定
+    pg.mixer.music.load("sound/PerituneMaterial_Dream_and_Reality_inst_loop.mp3")     # 音楽ファイルの読み込み
+    pg.mixer.music.play(1000)   # 音楽の再生回数
+    return 0
 
 class Background:#バックグラウンドクラス
     def __init__(self):
@@ -287,6 +293,8 @@ class Game(): #メイン処理のクラス
     def main(self): #メインループ
         running = True
         t = 0
+        sound()#音楽呼び出し
+        #C0B21128 西口響
         while running:
             #敵キャラのインスタンス化
             t += 1

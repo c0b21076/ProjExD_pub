@@ -11,6 +11,8 @@ HEIGHT = int(WIDTH * 0.7)
 BLACK = (0,0,0)
 RED = (255, 20, 40)
 SKYBLUE = (0,50,150)
+WHITE = (255, 255, 255)
+GRAY = (200,200,200)
 
 #フォントの設定
 font_name = pg.font.match_font("hg正楷書体pro")
@@ -25,6 +27,12 @@ def draw_text(screen,text,size,x,y,color): #テキスト描画用の関数
     text_rect.midtop = (x, y)
     screen.blit(text_surface,text_rect)
 
+def sound():#C0B21128 西口響
+    #音楽を呼び出す関数
+    pg.mixer.init(frequency = 44100)    # 初期設定
+    pg.mixer.music.load("sound/PerituneMaterial_Dream_and_Reality_inst_loop.mp3")     # 音楽ファイルの読み込み
+    pg.mixer.music.play(1000)   # 音楽の再生回数
+    return 0
 
 class Background:#バックグラウンドクラス
     def __init__(self):
@@ -263,6 +271,7 @@ class Game(): #メイン処理のクラス
         self.score = 0
 
         #フラグ
+        self.game_clear = False #髙井智暉
         self.game_over = False
         self.game_start = True
         
@@ -278,6 +287,16 @@ class Game(): #メイン処理のクラス
         draw_text(self.screen,"BULLET: SPACE key", 50, WIDTH / 2, HEIGHT - 300, BLACK)
         draw_text(self.screen,"MOVE: WASD key", 50, WIDTH / 2, HEIGHT - 200, BLACK)
 
+    #髙井智暉
+    def game_clear_screen(self):
+        draw_text(self.screen,"卵", 205, WIDTH / 2, HEIGHT / 4 - 50, GRAY)
+        draw_text(self.screen,"殺", 205, WIDTH / 2, HEIGHT / 4 + 150, GRAY)
+        draw_text(self.screen,"卵", 200, WIDTH / 2, HEIGHT / 4 - 50, WHITE)
+        draw_text(self.screen,"殺", 200, WIDTH / 2, HEIGHT / 4 + 150, WHITE)
+        draw_text(self.screen,"EGG EXECUTION", 50, WIDTH / 2, HEIGHT / 4 + 350, WHITE)
+        draw_text(self.screen,"Press 9 KEY TO RESTART", 36, WIDTH / 2, int(HEIGHT * 0.8), BLACK)
+        draw_text(self.screen,"Press ESCAPE KEY TO EXIT", 36, WIDTH / 2, int(HEIGHT * 0.85), BLACK)
+
     def game_over_screen(self): #GAMEOVER画面の描画用メソッド
         draw_text(self.screen,"死", 450, WIDTH / 2, HEIGHT / 2 - 300, RED)
         draw_text(self.screen,"DEATH", 50, WIDTH / 2, HEIGHT / 2 + 100, RED)
@@ -286,13 +305,16 @@ class Game(): #メイン処理のクラス
     def main(self): #メインループ
         running = True
         t = 0
+        sound()#音楽呼び出し
+        #C0B21128 西口響
         while running:
             #敵キャラのインスタンス化
             t += 1
             if t % 100 == 0:
-                #for i in range(10):
-                self.mob = Mob(WIDTH,random.randint(100,800))
-                self.mob_group.add(self.mob)
+                if self.game_clear == False: #髙井智暉
+                      self.mob = Mob(WIDTH,random.randint(100,800))
+                      self.mob_group.add(self.mob)
+
             
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -303,7 +325,7 @@ class Game(): #メイン処理のクラス
                     if event.key == pg.K_ESCAPE:
                         running = False
                     if self.game_start:
-                        if event.key == K_RETURN:
+                        if event.key == K_9:
                             self.game_start = False
 
                     #リスタート処理  gameover時　初期値に戻す
@@ -312,6 +334,7 @@ class Game(): #メイン処理のクラス
                             #emptyでグループを空にする
                             self.mob_group.empty()
                             self.game_over = False
+                            self.game_clear = False #髙井智暉
                             self.plane.IMMORTAL = False
                             self.plane.lives = 3
                             self.score = 0
@@ -320,7 +343,7 @@ class Game(): #メイン処理のクラス
                             self.plane_group.add(self.plane) 
                     
                 #弾丸発射キー操作
-                if self.game_start == False:
+                if self.game_start == False and self.game_clear == False: #髙井智暉
                     if event.type == pg.KEYDOWN:
                         if event.key == pg.K_SPACE:
                             if self.plane.DEAD == False:
@@ -398,21 +421,35 @@ class Game(): #メイン処理のクラス
                 #モブキャラと弾丸のヒット時の処理
                 mob1hits = pg.sprite.groupcollide(self.mob_group,self.bullet_group,True,True)
                 if mob1hits:
-                    self.score += 100              
+                    self.score += 100  
+                    #髙井智暉
+                    if self.score >= 10000:
+                        self.game_clear = True            
 
                 #スコア表示              
                 draw_text(self.screen, f'SCORE: {str(self.score)}', 50, WIDTH / 2, 100, BLACK)
+
+                #GAMECLEAR
+                #髙井智暉
+                if self.game_clear:
+                    self.plane.IMMORTAL = True
+                    self.plane.kill()
+                    self.mob.kill()
+                    self.plane.immortal_timer += 1
+                    self.game_clear_screen()
                 
                 #GAMEOVER　
                 if self.game_over:
                     self.game_over_screen()
                 
-                
-                if self.plane.IMMORTAL:
-                    self.plane.immortal_timer -= 1
-                if self.plane.immortal_timer <= 0:
-                    self.plane.IMMORTAL = False
-                    self.plane.immortal_timer = 60
+                #無敵時間カウンター  
+                #髙井智暉
+                if self.game_clear == False:
+                    if self.plane.IMMORTAL:
+                        self.plane.immortal_timer -= 1
+                    if self.plane.immortal_timer <= 0:
+                        self.plane.IMMORTAL = False
+                        self.plane.immortal_timer = 60
 
                 
 

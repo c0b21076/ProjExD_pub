@@ -31,7 +31,7 @@ def sound():#C0B21128 西口響
     #音楽を呼び出す関数
     pg.mixer.init(frequency = 44100)    # 初期設定
     pg.mixer.music.load("sound/PerituneMaterial_Dream_and_Reality_inst_loop.mp3")     # 音楽ファイルの読み込み
-    pg.mixer.music.play(1000)   # 音楽の再生回数
+    pg.mixer.music.play(-1)   # 音楽の再生回数
     return 0
 
 class Background:#バックグラウンドクラス
@@ -325,7 +325,7 @@ class Game(): #メイン処理のクラス
                     if event.key == pg.K_ESCAPE:
                         running = False
                     if self.game_start:
-                        if event.key == K_9:
+                        if event.key == K_RETURN:
                             self.game_start = False
 
                     #リスタート処理  gameover時　初期値に戻す
@@ -423,7 +423,7 @@ class Game(): #メイン処理のクラス
                 if mob1hits:
                     self.score += 100  
                     #髙井智暉
-                    if self.score >= 10000:
+                    if self.score >= 500:
                         self.game_clear = True            
 
                 #スコア表示              

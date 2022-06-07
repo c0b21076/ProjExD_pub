@@ -15,6 +15,9 @@ SKYBLUE = (0,50,150)
 #フォントの設定
 font_name = pg.font.match_font("hg正楷書体pro")
 
+PIC1 = 'pic/egg.png'
+# PIC2 = 
+
 def draw_text(screen,text,size,x,y,color): #テキスト描画用の関数
     font = pg.font.Font(font_name, size)
     text_surface = font.render(text, True, color)
@@ -114,7 +117,7 @@ class Plane(pg.sprite.Sprite):
         self.image = imglist[self.index]
     
     def create_bullet(self): #弾丸生成クラス呼び出しメソッド
-        return Bullet(self.rect.center[0] + 20,self.rect.center[1] + 20)
+        return Bullet(self.rect.center[0] + 20,self.rect.center[1] + 20, PIC1)
 
     def update(self):
         #描画する画像を現在の状態から指定
@@ -156,12 +159,13 @@ class Plane(pg.sprite.Sprite):
 
 
 class Bullet(pg.sprite.Sprite): #弾丸クラス
-    def __init__(self,x,y):
+    def __init__(self,x,y,pic = PIC1):
+        # pic変数を夏川が追加
         pg.sprite.Sprite.__init__(self)
 
         #イメージを空のリストに格納
         self.bullet_images = []
-        img = pg.image.load('pic/egg.png').convert_alpha()
+        img = pg.image.load(pic).convert_alpha()
         img = pg.transform.scale(img,(30,30))
         self.bullet_images.append(img)
         

@@ -16,7 +16,7 @@ SKYBLUE = (0,50,150)
 font_name = pg.font.match_font("hg正楷書体pro")
 
 PIC1 = 'pic/egg.png'
-# PIC2 = 
+PIC2 = 'pic/bomb-1.png'
 
 def draw_text(screen,text,size,x,y,color): #テキスト描画用の関数
     font = pg.font.Font(font_name, size)
@@ -337,7 +337,7 @@ class Game(): #メイン処理のクラス
                     # 夏川の追記（下3行）
                     if event.type == self.enemy_shoot:
                         for i in self.mob_group:
-                            self.enemy_bullet_group.add(Bullet(i.rect.center[0] + 20, i.rect.center[1] + 20)) 
+                            self.enemy_bullet_group.add(Bullet(i.rect.center[0] + 20, i.rect.center[1] + 20, PIC2)) 
                     
                    
             #バックグラウンド表示
